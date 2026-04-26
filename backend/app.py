@@ -21,7 +21,11 @@ load_dotenv()
 
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
-CORS(app, origins=["https://ai-finance-manager-nu.vercel.app/"])
+CORS(app, resources={
+    r"/*": {
+        "origins": "https://ai-finance-manager-nu.vercel.app"
+    }
+})
 
 UPLOAD_FOLDER = "uploads"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
@@ -144,7 +148,14 @@ def send_email(to, subject, body):
 #        subject="Test Email",
 #        body="SMTP is working 🚀"
 #    )
-#    return "Email sent!"    
+#    return "Email sent!" 
+
+@app.after_request
+def after_request(response):
+    response.headers.add("Access-Control-Allow-Origin", "https://ai-finance-manager-nu.vercel.app")
+    response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+    response.headers.add("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
+    return response   
     
 @app.route('/')
 def home():
