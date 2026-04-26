@@ -1169,13 +1169,16 @@ def get_settings():
 @jwt_required()
 def updated_settings():
     user_id = int(get_jwt_identity())
-    
     user = User.query.get(user_id)
-    
+    BASE_URL = "https://ai-finance-manager-h6jl.onrender.com"
     return {
         "name" : user.name,
         "email" : user.email,
         "mobile" : user.mobile,
+        "profile_image": (
+            f"{BASE_URL}/uploads/{user.profile_image}"
+            if user.profile_image else ""
+        ),
         "email_alerts" : user.email_alerts,
         "budget_exceeded_alert" : user.budget_exceeded_alert,
         "near_limit_alert": user.near_limit_alert,
