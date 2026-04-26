@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API = axios.create({
-    baseURL: "http://localhost:5000"
+    baseURL: "https://ai-finance-manager-h6jl.onrender.com/"
 });
 
 // 🔥 ADD THIS INTERCEPTOR
