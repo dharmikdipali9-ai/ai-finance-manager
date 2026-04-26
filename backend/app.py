@@ -21,10 +21,7 @@ load_dotenv()
 
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
-CORS(app, origins=[
-    "http://localhost:3000",
-    "http://localhost:3001"
-], supports_credentials=True)
+CORS(app, origins=["https://ai-finance-manager-nu.vercel.app/"])
 
 UPLOAD_FOLDER = "uploads"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
