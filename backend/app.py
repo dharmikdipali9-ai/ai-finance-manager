@@ -1,4 +1,5 @@
 import os
+from dotenv import load_dotenv
 from datetime import timedelta,datetime
 from flask import Flask,request, jsonify
 from flask_sqlalchemy import SQLAlchemy
@@ -16,6 +17,7 @@ from flask_socketio import SocketIO, emit
 from flask_socketio import join_room
 from sqlalchemy import func
 
+load_dotenv()
 
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
@@ -36,11 +38,19 @@ temp_user_data = {}
 # =========================
 # 🔗 DATABASE CONFIG
 # =========================
+
+
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
 
 jwt = JWTManager(app)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL")
+uri = os.getenv("DATABASE_URL") or os.getenv("MYSQL_URL")
+
+if uri and uri.startswith("mysql://"):
+    uri = uri.replace("mysql://", "mysql+pymysql://", 1)
+
+app.config["SQLALCHEMY_DATABASE_URI"] = uri
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
