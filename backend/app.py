@@ -1142,13 +1142,17 @@ def get_settings():
 
     if not user:
         return {"message": "User not found"}, 404
+    
+    BASE_URL = "https://ai-finance-manager-h6jl.onrender.com"
 
     return {
         # 👤 Profile
         "name": user.name,
         "mobile": user.mobile,
         "email": user.email,
-        "profile_image": f"http://localhost:5000/uploads/{user.profile_image}" if user.profile_image else "",
+        "profile_image": (
+            f"{BASE_URL}/uploads/{user.profile_image}"
+            if user.profile_image else ""),
 
         # 🔔 Notifications
         "email_alerts": user.email_alerts,
@@ -1195,8 +1199,7 @@ def update_settings():
 
     # ✅ FIXED IMAGE SAVE
     if data.get("profile_image"):
-        filename = data["profile_image"].split("/")[-1]
-        user.profile_image = filename
+        user.profile_image = data["profile_image"]
     
     # 🔔 Notification settings
     user.email_alerts = data.get("email_alerts", user.email_alerts)
@@ -1230,12 +1233,14 @@ def upload_profile():
      user = User.query.get(user_id)
      
      # save image path in DB
-     user.profile_image = file_path
+     user.profile_image = filename
      db.session.commit()
+     
+     BASE_URL = "https://ai-finance-manager-h6jl.onrender.com"
      
      return {
           "message": "Uploaded successfully",
-          "image_url": f"http://localhost:5000/uploads/{filename}"
+          "image_url": f"{BASE_URL}/uploads/{filename}"
      }
     
 @app.route("/uploads/<filename>")    
