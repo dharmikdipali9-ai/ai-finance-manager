@@ -16,6 +16,8 @@ import uuid
 from flask_socketio import SocketIO, emit
 from flask_socketio import join_room
 from sqlalchemy import func
+import cloudinary
+import cloudinary.uploader
 
 load_dotenv()
 
@@ -42,6 +44,11 @@ temp_user_data = {}
 
 
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
+cloudinary.config(
+    cloud_name=os.getenv("CLOUD_NAME"),
+    api_key=os.getenv("API_KEY"),
+    api_secret=os.getenv("API_SECRET")
+)
 
 jwt = JWTManager(app)
 
@@ -1150,9 +1157,7 @@ def get_settings():
         "name": user.name,
         "mobile": user.mobile,
         "email": user.email,
-        "profile_image": (
-            f"{BASE_URL}/uploads/{user.profile_image}"
-            if user.profile_image else ""),
+        "profile_image": user.profile_image,
 
         # 🔔 Notifications
         "email_alerts": user.email_alerts,
@@ -1175,10 +1180,7 @@ def updated_settings():
         "name" : user.name,
         "email" : user.email,
         "mobile" : user.mobile,
-        "profile_image": (
-            f"{BASE_URL}/uploads/{user.profile_image}"
-            if user.profile_image else ""
-        ),
+        "profile_image": user.profile_image,
         "email_alerts" : user.email_alerts,
         "budget_exceeded_alert" : user.budget_exceeded_alert,
         "near_limit_alert": user.near_limit_alert,
@@ -1219,32 +1221,31 @@ def update_settings():
 @app.route("/upload-profile", methods=["POST"])
 @jwt_required()
 def upload_profile():
-     if "file" not in request.files:
-        return {"error": "No file part"}, 400    
-     
-     file = request.files["file"]
-     
-     if file.filename == "":
-         return {"error": "No selected file"}, 400
-     
-     filename = f"{uuid.uuid4().hex}_{secure_filename(file.filename)}"
-     file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-     
-     file.save(file_path)
-     
-     user_id = int(get_jwt_identity())
-     user = User.query.get(user_id)
-     
-     # save image path in DB
-     user.profile_image = filename
-     db.session.commit()
-     
-     BASE_URL = "https://ai-finance-manager-h6jl.onrender.com"
-     
-     return {
-          "message": "Uploaded successfully",
-          "image_url": f"{BASE_URL}/uploads/{filename}"
-     }
+    if "file" not in request.files:
+        return {"error": "No file"}, 400
+
+    file = request.files["file"]
+
+    # 🔥 Upload to Cloudinary
+    result = cloudinary.uploader.upload(
+    file,
+    folder="profiles",
+    public_id=f"user_{user_id}",
+    overwrite=True
+    )
+
+    image_url = result["secure_url"]
+
+    user_id = int(get_jwt_identity())
+    user = User.query.get(user_id)
+
+    user.profile_image = image_url  # store FULL URL
+    db.session.commit()
+
+    return {
+        "message": "Uploaded successfully",
+        "image_url": image_url
+    }
     
 @app.route("/uploads/<filename>")    
 def uploaded_file(filename):
