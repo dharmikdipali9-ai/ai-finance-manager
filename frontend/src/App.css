@@ -1,0 +1,43 @@
+*{
+  font-family: "Roboto", sans-serif;
+}
+a{
+  text-decoration: none;
+}
+
+/* 🌙 DARK MODE ROOT */
+
+body.dark {
+  background-color: black;
+  color: #e2e8f0;
+}
+
+/* Cards */
+body.dark .card {
+  background-color: #1e293b;
+  color: #e2e8f0;
+  border: 1px solid #334155;
+}
+
+/* Inputs */
+body.dark .form-control {
+  background-color: black;
+  color: #e2e8f0;
+  border: 1px solid #334155;
+}
+
+body.dark .form-control::placeholder {
+  color: #94a3b8;
+}
+
+/* Buttons */
+body.dark .btn-primary {
+  background-color: #3b82f6;
+  border: none;
+}
+
+/* Text muted */
+body.dark .text-muted {
+  color: #94a3b8 !important;
+}
+

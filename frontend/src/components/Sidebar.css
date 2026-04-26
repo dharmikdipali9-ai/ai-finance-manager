@@ -1,0 +1,14 @@
+.sidebar-link {
+  position: relative;
+}
+
+.sidebar-link:hover {
+  background: rgba(50, 95, 215, 0.15);
+  color: #ffffff !important;
+  transform: translateX(3px);
+}
+
+/* Active glow */
+.active-glow {
+  box-shadow: 0 0 12px rgba(50, 95, 215, 0.4);
+}

@@ -1,0 +1,24 @@
+.stat-card {
+  transition: all 0.25s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+}
+
+.icon-box {
+  background: #f1f5f9;
+  padding: 8px;
+  border-radius: 8px;
+}
+
+.table-row-hover:hover {
+  background: #f9fafb;
+  transition: 0.2s;
+}
+
+.transition-hover:hover {
+  transform: translateY(-4px);
+  transition: 0.2s;
+}
