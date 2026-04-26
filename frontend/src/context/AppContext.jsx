@@ -9,6 +9,18 @@ const AppContext = createContext();
 export const AppProvider = ({ children }) => {
 
     const [user, setUser] = useState(null);
+
+    // 🔥 PUT IT HERE
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+
+        if (token) {
+            API.get("/settings")
+                .then((res) => setUser(res.data))
+                .catch(() => setUser(null));
+        }
+    }, []);
+
     const [theme, setTheme] = useState(
         localStorage.getItem("theme") || "light"
     );

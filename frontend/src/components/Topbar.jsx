@@ -135,7 +135,11 @@ function Topbar({ pageTitle = "Dashboard" }) {
             style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}
           >
             {user?.profile_image ? (
-              <img src={`${user.profile_image}?t=${Date.now()}`} alt="profile" style={avatarStyle} />
+              <img
+                src={user.profile_image || "https://i.pravatar.cc/100"}
+                alt="profile"
+                style={avatarStyle}
+              />
             ) : (
               <div style={avatarFallback}>
                 {initials}
