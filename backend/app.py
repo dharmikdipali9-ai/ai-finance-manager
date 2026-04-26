@@ -1221,31 +1221,36 @@ def update_settings():
 @app.route("/upload-profile", methods=["POST"])
 @jwt_required()
 def upload_profile():
-    if "file" not in request.files:
-        return {"error": "No file"}, 400
+    try:
+        if "file" not in request.files:
+            return {"error": "No file"}, 400
 
-    file = request.files["file"]
+        file = request.files["file"]
 
-    # 🔥 Upload to Cloudinary
-    result = cloudinary.uploader.upload(
-    file,
-    folder="profiles",
-    public_id=f"user_{user_id}",
-    overwrite=True
-    )
+        user_id = int(get_jwt_identity())   # ✅ FIX: define FIRST
+        user = User.query.get(user_id)
 
-    image_url = result["secure_url"]
+        # 🔥 Upload to Cloudinary
+        result = cloudinary.uploader.upload(
+            file,
+            folder="profiles",
+            public_id=f"user_{user_id}",
+            overwrite=True
+        )
 
-    user_id = int(get_jwt_identity())
-    user = User.query.get(user_id)
+        image_url = result["secure_url"]
 
-    user.profile_image = image_url  # store FULL URL
-    db.session.commit()
+        user.profile_image = image_url
+        db.session.commit()
 
-    return {
-        "message": "Uploaded successfully",
-        "image_url": image_url
-    }
+        return {
+            "message": "Uploaded successfully",
+            "image_url": image_url
+        }
+
+    except Exception as e:
+        print("🔥 UPLOAD ERROR:", e)
+        return {"error": "Upload failed"}, 500
     
 @app.route("/uploads/<filename>")    
 def uploaded_file(filename):
