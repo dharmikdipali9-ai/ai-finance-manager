@@ -106,6 +106,9 @@ class Account(db.Model):
     name = db.Column(db.String(100))   # e.g. SBI, Paytm
     type = db.Column(db.String(50))    # bank / wallet
     balance = db.Column(db.Float)
+    kyc_status = db.Column(db.String(20), default="Not Submitted")
+    kyc_url = db.Column(db.String(255))
+
 
 class Budget(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -545,7 +548,8 @@ def add_account():
         user_id = user_id,
         name = data["name"],
         type = data["type"],
-        balance = data["balance"]
+        balance = data["balance"],
+        kyc_status="Not Submitted"   # 👈 NEW
     )
 
     db.session.add(acc)
@@ -566,10 +570,68 @@ def get_accounts():
             "id" : acc.id,
             "name" : acc.name,
             "type" : acc.type,
-            "balance" : acc.balance
+            "balance" : acc.balance,
+            "kyc_status": acc.kyc_status,   # 👈 NEW
+            "kyc_url": acc.kyc_url          # 👈 NEW
         })
 
     return result
+
+
+import cloudinary.uploader
+
+@app.route("/account/<int:id>", methods=["PUT"])
+@jwt_required()
+def update_account(id):
+    user_id = int(get_jwt_identity())
+
+    account = Account.query.filter_by(id=id, user_id=user_id).first()
+
+    if not account:
+        return {"message": "Account not found"}, 404
+
+    name = request.form.get("name")
+    amount = float(request.form.get("amount", 0))
+    kyc = request.files.get("kyc")
+
+    # ✅ ADD IT HERE
+    if amount <= 0:
+        return {"message": "Amount must be greater than 0"}, 400 
+    try:
+        amount = float(request.form.get("amount", 0))
+    except:
+        return {"message": "Invalid amount"}, 400
+
+    # ✅ Always deposit
+    account.balance += amount
+
+    # ✅ If name changed
+    if name != account.name:
+        if not kyc:
+            return {"message": "KYC required for name change"}, 400
+
+        # 🔥 Upload to Cloudinary
+        upload_result = cloudinary.uploader.upload(kyc, resource_type="auto")
+
+        account.name = name
+        account.kyc_url = upload_result.get("secure_url")
+        account.kyc_status = "Pending"   # 👈 IMPORTANT
+
+    db.session.commit()
+
+    return {
+        "message": "Account updated successfully",
+        "kyc_status": account.kyc_status
+    }
+
+
+@app.route("/verify-kyc/<int:id>", methods=["PUT"])
+def verify_kyc(id):
+    account = Account.query.get(id)
+    account.kyc_status = "Verified"
+    db.session.commit()
+
+    return {"message": "KYC verified"}
 
 @app.route("/account/<int:id>", methods=["DELETE"])
 @jwt_required()
@@ -1404,7 +1466,23 @@ def delete_all_notifications():
     Notification.query.filter_by(user_id=user_id).delete()
     db.session.commit()
 
-    return {"message": "All notifications deleted"}    
+    return {"message": "All notifications deleted"}
+
+@app.route("/notifications/<int:id>", methods=["DELETE"])
+@jwt_required()
+def delete_notification(id):
+    user_id = int(get_jwt_identity())
+
+    notif = Notification.query.filter_by(id=id, user_id=user_id).first()
+
+    if not notif:
+        return {"message": "Not found"}, 404
+
+    db.session.delete(notif)
+    db.session.commit()
+
+    return {"message": "Deleted"}    
+    
  
 @app.route("/notify/report", methods=["POST"])
 @jwt_required()

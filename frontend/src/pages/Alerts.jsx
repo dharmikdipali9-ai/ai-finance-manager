@@ -35,13 +35,33 @@ function Alerts() {
     }
   };
 
+  // ✅ UPDATED CLEAR ALL (WITH CONFIRM)
   const clearAll = async () => {
+    const confirmClear = window.confirm("Are you sure you want to clear all notifications?");
+    if (!confirmClear) return;
+
     try {
       await API.delete("/notifications/all");
       setAlerts([]);
       toast.success("All notifications cleared 🧹");
     } catch {
       toast.error("Failed to clear notifications ❌");
+    }
+  };
+
+  // ✅ NEW: DELETE SINGLE NOTIFICATION
+  const deleteSingle = async (id, type) => {
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete this ${type} notification?`
+    );
+    if (!confirmDelete) return;
+
+    try {
+      await API.delete(`/notifications/${id}`);
+      setAlerts((prev) => prev.filter((a) => a.id !== id));
+      toast.success("Notification deleted ✅");
+    } catch {
+      toast.error("Delete failed ❌");
     }
   };
 
@@ -95,28 +115,23 @@ function Alerts() {
             let borderColor = "var(--bs-secondary)";
             let Icon = Bell;
             let iconColor = "text-secondary";
-            let bgColor = "bg-secondary";
 
             if (a.type === "goal") {
               borderColor = "var(--bs-success)";
               Icon = Target;
               iconColor = "text-success";
-              bgColor = "bg-success";
             } else if (a.type === "investment") {
               borderColor = "var(--bs-primary)";
               Icon = TrendingUp;
               iconColor = "text-primary";
-              bgColor = "bg-primary";
             } else if (a.type === "budget") {
               borderColor = "var(--bs-danger)";
               Icon = AlertTriangle;
               iconColor = "text-danger";
-              bgColor = "bg-danger";
             } else if (a.type === "report") {
               borderColor = "var(--bs-info)";
               Icon = BarChart3;
               iconColor = "text-info";
-              bgColor = "bg-info";
             }
 
             return (
@@ -139,16 +154,30 @@ function Alerts() {
                   }}
                 >
                   <div className="card-body p-4">
+                    
+                    {/* ✅ HEADER WITH DELETE BUTTON */}
                     <div className="d-flex justify-content-between align-items-start mb-3">
                       <div className={`d-flex align-items-center gap-2 ${iconColor} fw-bold`}>
                         <Icon size={20} />
                         <span className="text-uppercase small tracking-wider">{a.type}</span>
                       </div>
-                      {!a.is_read && (
-                        <span className="badge rounded-pill bg-danger px-2 py-1 shadow-sm" style={{ fontSize: '0.7rem' }}>
-                          NEW
-                        </span>
-                      )}
+
+                      <div className="d-flex align-items-center gap-2">
+                        {!a.is_read && (
+                          <span className="badge rounded-pill bg-danger px-2 py-1 shadow-sm" style={{ fontSize: '0.7rem' }}>
+                            NEW
+                          </span>
+                        )}
+
+                        <button
+                          className="btn btn-sm btn-light text-danger border-0"
+                          onClick={() => deleteSingle(a.id, a.type)}
+                          title="Delete"
+                          style={{ borderRadius: "8px" }}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     </div>
 
                     <p className={`mb-3 ${a.is_read ? "text-muted" : "text-dark fw-medium"}`} style={{ fontSize: "0.95rem", lineHeight: "1.5" }}>

@@ -93,7 +93,10 @@ function Settings() {
             formData.append("file", file);
 
             const res = await API.post("/upload-profile", formData, {
-                headers: { "Content-Type": "multipart/form-data" },
+                headers: {
+                    "Authorization": `Bearer ${localStorage.getItem("token")}`,
+                    "Content-Type": "multipart/form-data"
+                },
             });
 
             // ✅ update local form

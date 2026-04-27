@@ -9,9 +9,16 @@ export const AppProvider = ({ children }) => {
 
     const [user, setUser] = useState(null);
 
-    const [theme, setTheme] = useState(
-        localStorage.getItem("theme") || "light"
-    );
+    const [theme, setTheme] = useState(() => {
+        const saved = localStorage.getItem("theme") || "light";
+
+        // 🔥 APPLY IMMEDIATELY BEFORE RENDER
+        if (saved === "dark") {
+            document.body.classList.add("dark");
+        }
+
+        return saved;
+    });
 
     const [unreadAlerts, setUnreadAlerts] = useState(0);
     const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -98,8 +105,12 @@ export const AppProvider = ({ children }) => {
 
     const toggleTheme = () => {
         const newTheme = theme === "dark" ? "light" : "dark";
+
         setTheme(newTheme);
         localStorage.setItem("theme", newTheme);
+
+        // 🔥 ADD THIS LINE (instant DOM sync)
+        document.body.classList.toggle("dark", newTheme === "dark");
     };
 
     return (
