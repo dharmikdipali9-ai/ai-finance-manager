@@ -55,14 +55,43 @@ function Budget() {
     }
   };
 
-  const deleteBudget = async (category) => {
-    try {
-      await API.delete(`/budget/${category}`);
-      toast.success("Deleted ✅");
-      loadBudgets();
-    } catch {
-      toast.error("Delete failed ❌");
-    }
+  const confirmDelete = (category) => {
+    toast(
+      ({ closeToast }) => (
+        <div>
+          <p className="fw-semibold mb-2">Delete this budget?</p>
+          <div className="d-flex justify-content-end gap-2">
+            <button
+              className="btn btn-sm btn-light"
+              onClick={closeToast}
+            >
+              Cancel
+            </button>
+            <button
+              className="btn btn-sm btn-danger"
+              onClick={async () => {
+                closeToast();
+                try {
+                  await API.delete(`/budget/${category}`);
+                  toast.success("Deleted ✅");
+                  loadBudgets();
+                } catch {
+                  toast.error("Delete failed ❌");
+                }
+              }}
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      ),
+      {
+        position: "top-center",
+        autoClose: false,
+        closeOnClick: false,
+        draggable: false,
+      }
+    );
   };
 
   const getStatusInfo = (status) => {
@@ -81,8 +110,8 @@ function Budget() {
   const formatCurrency = (val) => new Intl.NumberFormat("en-IN").format(val);
 
   return (
-    <div className="container-fluid py-4" style={{minHeight: "100vh" }}>
-      
+    <div className="container-fluid py-4" style={{ minHeight: "100vh" }}>
+
       {/* 🔥 HEADER */}
       <div className="d-flex align-items-center mb-4 gap-2">
         <PieChart className="text-primary" size={28} />
@@ -122,8 +151,8 @@ function Budget() {
             </div>
 
             <div className="col-12 col-md-2 d-flex align-items-end">
-              <button 
-                className="btn btn-primary btn-lg w-100 fw-bold shadow-sm" 
+              <button
+                className="btn btn-primary btn-lg w-100 fw-bold shadow-sm"
                 onClick={addBudget}
                 style={{ borderRadius: "10px" }}
               >
@@ -164,21 +193,21 @@ function Budget() {
                           <td>₹{formatCurrency(b.budget)}</td>
                           <td className="fw-medium">₹{formatCurrency(b.spent)}</td>
                           <td style={{ width: "150px" }}>
-                            <div className="progress" style={{ height: "6px", borderRadius: "10px"}}>
-                              <div 
-                                className="progress-bar" 
+                            <div className="progress" style={{ height: "6px", borderRadius: "10px" }}>
+                              <div
+                                className="progress-bar"
                                 style={{ width: `${percentage}%`, backgroundColor: status.color }}
                               ></div>
                             </div>
                           </td>
                           <td>
-                            <span className="badge d-inline-flex align-items-center gap-1 py-2 px-3" 
-                                  style={{ backgroundColor: status.bg, color: status.color, borderRadius: "8px" }}>
+                            <span className="badge d-inline-flex align-items-center gap-1 py-2 px-3"
+                              style={{ backgroundColor: status.bg, color: status.color, borderRadius: "8px" }}>
                               {status.icon} {status.label}
                             </span>
                           </td>
                           <td className="text-end">
-                            <button className="btn btn-link text-danger p-0" onClick={() => deleteBudget(b.category)}>
+                            <button className="btn btn-link text-danger p-0" onClick={() => confirmDelete(b.category)}>
                               <Trash2 size={18} />
                             </button>
                           </td>
@@ -224,7 +253,7 @@ function Budget() {
           )}
         </div>
       </div>
-      
+
       <style>{`
         .form-control:focus {
           border-color: #3b82f6;

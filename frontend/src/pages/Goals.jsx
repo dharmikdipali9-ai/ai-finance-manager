@@ -105,7 +105,7 @@ function Goals() {
   const format = (val) => new Intl.NumberFormat("en-IN").format(val);
 
   return (
-    <div className="container-fluid py-4" style={{minHeight: "100vh" }}>
+    <div className="container-fluid py-4" style={{ minHeight: "100vh" }}>
       <div className="d-flex align-items-center gap-2 mb-4">
         <Target className="text-primary" size={32} />
         <h3 className="fw-bold mb-0">My Goals</h3>
@@ -183,14 +183,40 @@ function Goals() {
                     </div>
                     <button
                       className="btn btn-light text-danger rounded-circle p-2"
-                      onClick={async () => {
-                        if (!window.confirm("Delete goal and refund money?")) return;
-                        try {
-                          await API.delete(`/goal/${g.id}`);
-                          toast.success("Goal deleted & refunded 💰");
-                          loadGoals();
-                          loadAccounts();
-                        } catch { toast.error("Delete failed ❌"); }
+                      onClick={() => {
+                        toast(
+                          ({ closeToast }) => (
+                            <div>
+                              <p className="mb-2">Delete goal and refund money?</p>
+                              <div className="d-flex gap-2">
+                                <button
+                                  className="btn btn-sm btn-danger"
+                                  onClick={async () => {
+                                    try {
+                                      await API.delete(`/goal/${g.id}`);
+                                      toast.success("Goal deleted & refunded 💰");
+                                      loadGoals();
+                                      loadAccounts();
+                                    } catch {
+                                      toast.error("Delete failed ❌");
+                                    }
+                                    closeToast();
+                                  }}
+                                >
+                                  Yes
+                                </button>
+
+                                <button
+                                  className="btn btn-sm btn-secondary"
+                                  onClick={closeToast}
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          ),
+                          { autoClose: false }
+                        );
                       }}
                     >
                       <Trash2 size={18} />
@@ -204,9 +230,8 @@ function Goals() {
 
                   <div className="progress mb-3" style={{ height: "10px", borderRadius: "10px", backgroundColor: "#e2e8f0" }}>
                     <div
-                      className={`progress-bar progress-bar-striped progress-bar-animated ${
-                        g.progress < 50 ? "bg-danger" : g.progress < 80 ? "bg-warning" : "bg-success"
-                      }`}
+                      className={`progress-bar progress-bar-striped progress-bar-animated ${g.progress < 50 ? "bg-danger" : g.progress < 80 ? "bg-warning" : "bg-success"
+                        }`}
                       style={{ width: `${g.progress}%`, borderRadius: "10px" }}
                     ></div>
                   </div>

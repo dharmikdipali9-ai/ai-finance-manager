@@ -106,16 +106,39 @@ function Investments() {
             toast.error("Failed to add investment ❌");
         }
     };
+    const deleteInvestment = (id) => {
+        toast(
+            ({ closeToast }) => (
+                <div>
+                    <p className="mb-2">Delete this investment?</p>
+                    <div className="d-flex gap-2">
+                        <button
+                            className="btn btn-sm btn-danger"
+                            onClick={async () => {
+                                try {
+                                    await API.delete(`/investment/${id}`);
+                                    toast.success("Deleted & refunded 💰");
+                                    loadData();
+                                } catch {
+                                    toast.error("Failed ❌");
+                                }
+                                closeToast();
+                            }}
+                        >
+                            Yes
+                        </button>
 
-    const deleteInvestment = async (id) => {
-        if (!window.confirm("Delete this investment?")) return;
-        try {
-            await API.delete(`/investment/${id}`);
-            toast.success("Deleted & refunded 💰");
-            loadData();
-        } catch {
-            toast.error("Failed ❌");
-        }
+                        <button
+                            className="btn btn-sm btn-secondary"
+                            onClick={closeToast}
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            ),
+            { autoClose: false }
+        );
     };
 
     const format = (val) => new Intl.NumberFormat("en-IN").format(val);
