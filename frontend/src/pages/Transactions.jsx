@@ -25,6 +25,33 @@ const formatText = (text) => {
     .replace(/\b\w/g, (c) => c.toUpperCase());
 };
 
+
+const ConfirmModal = ({ show, onClose, onConfirm, message }) => {
+  if (!show) return null;
+
+  return (
+    <div className="modal show d-block" style={{ background: "rgba(0,0,0,0.5)" }}>
+      <div className="modal-dialog modal-dialog-centered">
+        <div className="modal-content p-4" style={{ borderRadius: "16px" }}>
+
+          <h5 className="fw-bold mb-3">Confirm Action</h5>
+          <p className="text-muted">{message}</p>
+
+          <div className="d-flex justify-content-end gap-2 mt-3">
+            <button className="btn btn-light" onClick={onClose}>
+              Cancel
+            </button>
+            <button className="btn btn-danger fw-bold" onClick={onConfirm}>
+              Delete
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+};
+
 function Transactions() {
   const [transactions, setTransactions] = useState([]);
   const [accounts, setAccounts] = useState([]);
@@ -34,6 +61,27 @@ function Transactions() {
   const [endDate, setEndDate] = useState("");
   const [editId, setEditId] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
+
+
+  const handleDeleteClick = (id) => {
+    setDeleteId(id);
+    setShowConfirm(true);
+  };
+
+  const confirmDelete = () => {
+    API.delete(`/transaction/${deleteId}`)
+      .then(() => {
+        toast.success("Deleted Successfully 🗑️");
+        getTransactions();
+      })
+      .catch((err) => console.log(err));
+
+    setShowConfirm(false);
+    setDeleteId(null);
+  };
+
 
   const [form, setForm] = useState({
     type: "expense",
@@ -106,14 +154,6 @@ function Transactions() {
       .catch((err) => console.log(err));
   };
 
-  const deleteTransaction = (id) => {
-    API.delete(`/transaction/${id}`)
-      .then(() => {
-        toast.success("Deleted Successfully 🗑️");
-        getTransactions();
-      })
-      .catch((err) => console.log(err));
-  };
 
   const filteredTransactions = transactions.filter((t) => {
     const matchesSearch = t.category.toLowerCase().includes(search.toLowerCase());
@@ -275,7 +315,7 @@ function Transactions() {
                       <td className="px-4 text-end">
                         <div className="d-flex justify-content-end gap-2">
                           <button className="btn btn-light btn-sm text-warning" onClick={() => handleEdit(t)}><Edit3 size={16} /></button>
-                          <button className="btn btn-light btn-sm text-danger" onClick={() => deleteTransaction(t.id)}><Trash2 size={16} /></button>
+                          <button className="btn btn-light btn-sm text-danger" onClick={() => handleDeleteClick(t.id)}><Trash2 size={16} /></button>
                         </div>
                       </td>
                     </tr>
@@ -366,6 +406,12 @@ function Transactions() {
 
         </div>
       </div>
+      <ConfirmModal
+        show={showConfirm}
+        onClose={() => setShowConfirm(false)}
+        onConfirm={confirmDelete}
+        message="Are you sure you want to delete this transaction?"
+      />
 
       <style>{`
         .form-control:focus, .form-select:focus {

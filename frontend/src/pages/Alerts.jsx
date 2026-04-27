@@ -2,15 +2,15 @@ import { useEffect, useState } from "react";
 import API from "../services/api";
 import { toast } from "react-toastify";
 import { useApp } from "../context/AppContext";
-import { 
-  Bell, 
-  Trash2, 
-  CheckCircle2, 
-  Target, 
-  TrendingUp, 
-  AlertTriangle, 
-  BarChart3, 
-  Clock 
+import {
+  Bell,
+  Trash2,
+  CheckCircle2,
+  Target,
+  TrendingUp,
+  AlertTriangle,
+  BarChart3,
+  Clock
 } from "lucide-react";
 
 function Alerts() {
@@ -36,33 +36,77 @@ function Alerts() {
   };
 
   // ✅ UPDATED CLEAR ALL (WITH CONFIRM)
-  const clearAll = async () => {
-    const confirmClear = window.confirm("Are you sure you want to clear all notifications?");
-    if (!confirmClear) return;
+  const confirmClearAll = () => {
+    toast(
+      ({ closeToast }) => (
+        <div>
+          <p className="fw-semibold mb-2">Clear all notifications?</p>
 
-    try {
-      await API.delete("/notifications/all");
-      setAlerts([]);
-      toast.success("All notifications cleared 🧹");
-    } catch {
-      toast.error("Failed to clear notifications ❌");
-    }
+          <div className="d-flex justify-content-end gap-2">
+            <button
+              className="btn btn-sm btn-light"
+              onClick={closeToast}
+            >
+              Cancel
+            </button>
+
+            <button
+              className="btn btn-sm btn-danger"
+              onClick={async () => {
+                closeToast();
+                try {
+                  await API.delete("/notifications/all");
+                  setAlerts([]);
+                  toast.success("All notifications cleared 🧹");
+                } catch {
+                  toast.error("Failed to clear notifications ❌");
+                }
+              }}
+            >
+              Clear All
+            </button>
+          </div>
+        </div>
+      )
+    );
   };
 
   // ✅ NEW: DELETE SINGLE NOTIFICATION
-  const deleteSingle = async (id, type) => {
-    const confirmDelete = window.confirm(
-      `Are you sure you want to delete this ${type} notification?`
-    );
-    if (!confirmDelete) return;
+  const confirmDeleteSingle = (id, type) => {
+    toast(
+      ({ closeToast }) => (
+        <div>
+          <p className="fw-semibold mb-2">
+            Delete this {type} notification?
+          </p>
 
-    try {
-      await API.delete(`/notifications/${id}`);
-      setAlerts((prev) => prev.filter((a) => a.id !== id));
-      toast.success("Notification deleted ✅");
-    } catch {
-      toast.error("Delete failed ❌");
-    }
+          <div className="d-flex justify-content-end gap-2">
+            <button
+              className="btn btn-sm btn-light"
+              onClick={closeToast}
+            >
+              Cancel
+            </button>
+
+            <button
+              className="btn btn-sm btn-danger"
+              onClick={async () => {
+                closeToast();
+                try {
+                  await API.delete(`/notifications/${id}`);
+                  setAlerts((prev) => prev.filter((a) => a.id !== id));
+                  toast.success("Notification deleted ✅");
+                } catch {
+                  toast.error("Delete failed ❌");
+                }
+              }}
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      )
+    );
   };
 
   useEffect(() => {
@@ -77,8 +121,8 @@ function Alerts() {
   }, []);
 
   return (
-    <div className="container-fluid py-4" style={{minHeight: "100vh" }}>
-      
+    <div className="container-fluid py-4" style={{ minHeight: "100vh" }}>
+
       {/* HEADER */}
       <div className="row align-items-center mb-4 g-3 px-2">
         <div className="col-12 col-sm-6">
@@ -91,7 +135,7 @@ function Alerts() {
           {alerts.length > 0 && (
             <button
               className="btn btn-outline-danger d-inline-flex align-items-center gap-2 px-3 py-2"
-              onClick={clearAll}
+              onClick={confirmClearAll}
               style={{ borderRadius: "10px", transition: "all 0.2s" }}
             >
               <Trash2 size={18} /> Clear All Notifications
@@ -154,7 +198,7 @@ function Alerts() {
                   }}
                 >
                   <div className="card-body p-4">
-                    
+
                     {/* ✅ HEADER WITH DELETE BUTTON */}
                     <div className="d-flex justify-content-between align-items-start mb-3">
                       <div className={`d-flex align-items-center gap-2 ${iconColor} fw-bold`}>
@@ -171,7 +215,7 @@ function Alerts() {
 
                         <button
                           className="btn btn-sm btn-light text-danger border-0"
-                          onClick={() => deleteSingle(a.id, a.type)}
+                          onClick={() => confirmDeleteSingle(a.id, a.type)}
                           title="Delete"
                           style={{ borderRadius: "8px" }}
                         >

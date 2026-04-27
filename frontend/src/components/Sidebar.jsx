@@ -48,7 +48,7 @@ function Sidebar() {
     alignItems: "center",
     justifyContent: sidebarOpen ? "flex-start" : "center",
     gap: "12px",
-    padding: "5px 14px",
+    padding: "10px 14px",
     marginBottom: "6px",
     borderRadius: "10px",
     textDecoration: "none",
@@ -94,7 +94,7 @@ function Sidebar() {
       <div
         style={{
           padding: "5px",
-          marginBottom: "10px",
+          marginBottom: "15px",
           color: "white",
           fontWeight: "700",
           fontSize: "18px",

@@ -158,12 +158,6 @@ function Accounts() {
           </div>
         </div>
       ),
-      {
-        position: "top-center",
-        autoClose: false,
-        closeOnClick: false,
-        draggable: false,
-      }
     );
   };
 
