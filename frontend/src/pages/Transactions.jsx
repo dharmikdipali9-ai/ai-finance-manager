@@ -387,7 +387,7 @@ function Transactions() {
                             <button className="btn btn-light btn-sm text-warning d-flex align-items-center gap-1" onClick={() => handleEdit(t)}>
                               <Edit3 size={14} /> Edit
                             </button>
-                            <button className="btn btn-light btn-sm text-danger d-flex align-items-center gap-1" onClick={() => deleteTransaction(t.id)}>
+                            <button className="btn btn-light btn-sm text-danger d-flex align-items-center gap-1" onClick={() => handleDeleteClick(t.id)}>
                               <Trash2 size={14} /> Delete
                             </button>
                           </div>
