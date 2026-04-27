@@ -227,7 +227,7 @@ function Budget() {
                     <div key={i} className="p-3 mb-3 border rounded-3 shadow-xs">
                       <div className="d-flex justify-content-between align-items-start mb-2">
                         <h6 className="fw-bold mb-0">{formatText(b.category)}</h6>
-                        <button className="btn btn-sm text-danger p-0" onClick={() => deleteBudget(b.category)}>
+                        <button className="btn btn-sm text-danger p-0" onClick={() => confirmDelete(b.category)}>
                           <Trash2 size={16} />
                         </button>
                       </div>

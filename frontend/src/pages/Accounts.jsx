@@ -126,18 +126,47 @@ function Accounts() {
     }
   };
 
-  const deleteAccount = async (id) => {
-    const confirmDelete = window.confirm("Are you sure you want to delete this account?");
-    if (!confirmDelete) return;
+  const confirmDeleteAccount = (id) => {
+    toast(
+      ({ closeToast }) => (
+        <div>
+          <p className="fw-semibold mb-2">Delete this account?</p>
 
-    try {
-      await API.delete(`/account/${id}`);
-      toast.success("Deleted ✅");
-      getAccounts();
-    } catch {
-      toast.error("Delete failed ❌");
-    }
+          <div className="d-flex justify-content-end gap-2">
+            <button
+              className="btn btn-sm btn-light"
+              onClick={closeToast}
+            >
+              Cancel
+            </button>
+
+            <button
+              className="btn btn-sm btn-danger"
+              onClick={async () => {
+                closeToast();
+                try {
+                  await API.delete(`/account/${id}`);
+                  toast.success("Deleted ✅");
+                  getAccounts();
+                } catch {
+                  toast.error("Delete failed ❌");
+                }
+              }}
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      ),
+      {
+        position: "top-center",
+        autoClose: false,
+        closeOnClick: false,
+        draggable: false,
+      }
+    );
   };
+
   const isNameChanged =
     editData && editForm.name !== editData.type;
 
@@ -300,7 +329,7 @@ function Accounts() {
 
                         <button
                           className="btn btn-link text-danger p-0 border-0"
-                          onClick={() => deleteAccount(a.id)}
+                          onClick={() => confirmDeleteAccount(a.id)}
                         >
                           <Trash2 size={18} />
                         </button>
