@@ -25,9 +25,12 @@ app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
 CORS(app, resources={
     r"/*": {
-        "origins": "https://ai-finance-manager-nu.vercel.app"
+        "origins": [
+            "http://localhost:3000",
+            "https://ai-finance-manager-nu.vercel.app"
+        ]
     }
-})
+}, supports_credentials=True)
 
 UPLOAD_FOLDER = "uploads"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
@@ -577,9 +580,6 @@ def get_accounts():
 
     return result
 
-
-import cloudinary.uploader
-
 @app.route("/account/<int:id>", methods=["PUT"])
 @jwt_required()
 def update_account(id):
@@ -591,16 +591,16 @@ def update_account(id):
         return {"message": "Account not found"}, 404
 
     name = request.form.get("name")
-    amount = float(request.form.get("amount", 0))
     kyc = request.files.get("kyc")
 
     # ✅ ADD IT HERE
-    if amount <= 0:
-        return {"message": "Amount must be greater than 0"}, 400 
     try:
         amount = float(request.form.get("amount", 0))
     except:
         return {"message": "Invalid amount"}, 400
+    if amount <= 0:
+        return {"message": "Amount must be greater than 0"}, 400
+
 
     # ✅ Always deposit
     account.balance += amount
@@ -626,8 +626,14 @@ def update_account(id):
 
 
 @app.route("/verify-kyc/<int:id>", methods=["PUT"])
+@jwt_required()
 def verify_kyc(id):
-    account = Account.query.get(id)
+    user_id = int(get_jwt_identity())
+
+    account = Account.query.filter_by(id=id, user_id=user_id).first()
+    if not account:
+        return {"message": "Account not found"}, 404
+
     account.kyc_status = "Verified"
     db.session.commit()
 
@@ -1476,7 +1482,7 @@ def delete_notification(id):
     notif = Notification.query.filter_by(id=id, user_id=user_id).first()
 
     if not notif:
-        return {"message": "Not found"}, 404
+        return {"message": "Not found"}, 404    
 
     db.session.delete(notif)
     db.session.commit()
@@ -1521,4 +1527,4 @@ def handle_join(data):
     print(f"✅ User joined room: {user_id}")      
     
 if __name__ == "__main__":
-    socketio.run(app)
+    socketio.run(app, debug=True)
