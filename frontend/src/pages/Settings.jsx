@@ -28,11 +28,8 @@ function Settings() {
         near_limit_alert: true,
     });
 
-    const [darkMode, setDarkMode] = useState(
-        localStorage.getItem("theme") === "dark"
-    );
 
-    const { theme } = useApp();
+    const { theme, toggleTheme } = useApp();
     const isDark = theme === "dark";
 
     const fileInputRef = useRef(null);
@@ -55,14 +52,6 @@ function Settings() {
         if (!token) return;
         loadSettings();
     }, []);
-
-    useEffect(() => {
-        if (darkMode) {
-            document.body.classList.add("dark");
-        } else {
-            document.body.classList.remove("dark");
-        }
-    }, [darkMode]);
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -117,11 +106,6 @@ function Settings() {
         }
     };
 
-    const toggleTheme = () => {
-        const newTheme = !darkMode;
-        setDarkMode(newTheme);
-        localStorage.setItem("theme", newTheme ? "dark" : "light");
-    };
 
     return (
         <div className="container-fluid py-4" style={{ minHeight: "100vh" }}>
@@ -241,8 +225,8 @@ function Settings() {
                     <div className="card-body p-4">
                         <div className="d-flex align-items-center justify-content-between">
                             <div className="d-flex align-items-center gap-3">
-                                <div className={`p-2 rounded-2 ${darkMode ? 'bg-warning bg-opacity-10 text-warning' : 'bg-primary bg-opacity-10 text-primary'}`}>
-                                    {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+                                <div className={`p-2 rounded-2 ${theme === "dark" ? 'bg-warning bg-opacity-10 text-warning' : 'bg-primary bg-opacity-10 text-primary'}`}>
+                                    {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
                                 </div>
                                 <div>
                                     <h6 className="mb-0 fw-bold">Appearance</h6>
@@ -253,7 +237,7 @@ function Settings() {
                                 <input
                                     className="form-check-input"
                                     type="checkbox"
-                                    checked={darkMode}
+                                    checked={theme === "dark"}
                                     onChange={toggleTheme}
                                     style={{ width: '2.5em', height: '1.25em', cursor: 'pointer' }}
                                 />

@@ -182,7 +182,7 @@ function Sidebar() {
         style={{
           marginTop: "auto",
           borderTop: "1px solid #1e293b",
-          paddingTop: "12px",
+          paddingTop: "8px",
         }}
       >
         {bottomMenu.map((item) => (

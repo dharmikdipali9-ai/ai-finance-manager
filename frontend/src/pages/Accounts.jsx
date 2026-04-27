@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import API from "../services/api";
 import { toast } from "react-toastify";
 import AmountInput from "../components/AmountInput";
-import { Plus, Trash2, User, Landmark, AlertCircle } from "lucide-react";
+import { Plus, Trash2, User, Landmark, Edit3, AlertCircle } from "lucide-react";
 
 function Accounts() {
   const [accounts, setAccounts] = useState([]);
@@ -295,7 +295,7 @@ function Accounts() {
                           className="btn btn-sm btn-outline-primary"
                           onClick={() => openEditModal(a)}
                         >
-                          Edit
+                          <Edit3 size={16} />
                         </button>
 
                         <button

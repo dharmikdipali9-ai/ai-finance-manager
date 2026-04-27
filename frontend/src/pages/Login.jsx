@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Lock, Mail, Eye, EyeOff, Loader2 } from 'lucide-react';
 import API from "../services/api";
 import { useApp } from "../context/AppContext";
+import { toast } from "react-toastify";
 
 function Auth() {
   const navigate = useNavigate();
@@ -60,7 +61,10 @@ function Auth() {
 
   const { loadUser } = useApp();
   const loginUser = async () => {
-    if (!form.email || !form.password) return alert("Fill all fields");
+    if (!form.email || !form.password) {
+      toast.error("Fill all fields");
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -72,416 +76,433 @@ function Auth() {
       localStorage.setItem("token", res.data.token);
       await loadUser();   // 🔥 THIS LINE FIXES EVERYTHING
 
+      toast.success("Welcome back 👋");
       navigate("/dashboard");
-    } catch {
-      alert("Login failed ❌");
-    } finally {
-      setIsLoading(false);
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Login failed ❌");
     }
-  };
+    finally {
+    setIsLoading(false);
+  }
+};
 
-  // 📩 REGISTER - SEND OTP
-  const sendOTP = async () => {
-    if (!form.name || !form.email || !form.mobile || !form.password) {
-      return alert("All fields required");
-    }
+// 📩 REGISTER - SEND OTP
+const sendOTP = async () => {
+  if (!form.name || !form.email || !form.mobile || !form.password) {
+    toast.error("Fill all fields");
+    return;
+  }
 
-    if (!/^\d{10}$/.test(form.mobile)) {
-      return alert("Mobile must be 10 digits");
-    }
+  if (!/^\d{10}$/.test(form.mobile)) {
+    toast.error("Mobile must be 10 digits");
+    return;
+  }
 
-    setIsLoading(true);
-    try {
-      await API.post("/register", form);
-      alert("OTP sent 📩");
-      setStep(2);
-      setTimer(30);
-    } catch {
-      alert("Failed ❌");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const toastId = toast.loading("Sending OTP...");
 
-  const verifyOTP = async () => {
-    setIsLoading(true);
-    try {
-      await API.post("/verify-otp", {
-        email: form.email,
-        otp: form.otp
-      });
+  try {
+    await API.post("/register", form);
 
-      alert("Account created 🎉");
-      setIsRegister(false);
-      setStep(1);
-    } catch {
-      alert("Invalid OTP ❌");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    toast.update(toastId, {
+      render: "OTP sent 📩",
+      type: "success",
+      isLoading: false,
+      autoClose: 3000
+    });
 
-  // 🔑 FORGOT PASSWORD FLOW
+    setStep(2);
+    setTimer(30);
 
-  const sendResetOTP = async () => {
-    if (!form.email) return alert("Enter email");
+  } catch (error) {
+    toast.update(toastId, {
+      render: error.response?.data?.message || "Failed ❌",
+      type: "error",
+      isLoading: false,
+      autoClose: 3000
+    });
+  }
+};
 
-    setIsLoading(true);
-    try {
-      await API.post("/forgot-password", { email: form.email });
-      alert("OTP sent 📩");
-      setStep(2);
-      setTimer(30);
-    } catch {
-      alert("Failed ❌");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+const verifyOTP = async () => {
+  setIsLoading(true);
+  try {
+    await API.post("/verify-otp", {
+      email: form.email,
+      otp: form.otp
+    });
 
-  const verifyResetOTP = async () => {
-    setIsLoading(true);
-    try {
-      await API.post("/verify-reset-otp", {
-        email: form.email,
-        otp: form.otp
-      });
+    toast.success("Account created 🎉");
+    setIsRegister(false);
+    setStep(1);
+  } catch {
+    toast.error("Invalid OTP ❌");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
-      alert("OTP verified ✅");
-      setStep(3);
-    } catch {
-      alert("Invalid OTP ❌");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+// 🔑 FORGOT PASSWORD FLOW
 
-  const resetPassword = async () => {
-    if (form.password !== form.confirmPassword) {
-      return alert("Passwords do not match ❌");
-    }
+const sendResetOTP = async () => {
+  if (!form.email) return toast.error("Enter email");
 
-    setIsLoading(true);
-    try {
-      await API.post("/reset-password", {
-        email: form.email,
-        newPassword: form.password
-      });
+  setIsLoading(true);
+  try {
+    await API.post("/forgot-password", { email: form.email });
+    toast.success("OTP sent 📩");
+    setStep(2);
+    setTimer(30);
+  } catch {
+    toast.error("Failed ❌");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
-      alert("Password reset successful 🔐");
-      setForgotMode(false);
-      setStep(1);
-    } catch {
-      alert("Error ❌");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+const verifyResetOTP = async () => {
+  setIsLoading(true);
+  try {
+    await API.post("/verify-reset-otp", {
+      email: form.email,
+      otp: form.otp
+    });
+
+    toast.success("OTP verified ✅");
+    setStep(3);
+  } catch {
+    toast.error("Invalid OTP ❌");
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+const resetPassword = async () => {
+  if (form.password !== form.confirmPassword) {
+    toast.error("Passwords do not match ❌");
+    return;
+  }
+
+  setIsLoading(true);
+  try {
+    await API.post("/reset-password", {
+      email: form.email,
+      newPassword: form.password
+    });
+
+    toast.success("Password reset successful 🔐");
+    setForgotMode(false);
+    setStep(1);
+  } catch {
+    toast.error("Error ❌");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
 
-  
-  return (
-    <div
-      className="min-vh-100 d-flex align-items-center"
-      style={{
-        background: "linear-gradient(135deg,#eef2f7,#dbeafe)",
-        fontFamily: "Inter, sans-serif"
-      }}
-    >
-      <div className="row w-100 m-0">
 
-        {/* LEFT IMAGE */}
-        <div className="col-md-6 d-none d-md-block p-0 position-relative">
-          <img
-            src="header.jpeg"
-            alt="finance"
-            style={{
-              width: "100%",
-              height: "100vh",
-              objectFit: "cover"
-            }}
-          />
-          {/* Overlay */}
-          <div style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
+return (
+  <div
+    className="min-vh-100 d-flex align-items-center"
+    style={{
+      background: "linear-gradient(135deg,#eef2f7,#dbeafe)",
+      fontFamily: "Inter, sans-serif"
+    }}
+  >
+    <div className="row w-100 m-0">
+
+      {/* LEFT IMAGE */}
+      <div className="col-md-6 d-none d-md-block p-0 position-relative">
+        <img
+          src="header.jpeg"
+          alt="finance"
+          style={{
             width: "100%",
-            height: "100%",
-            background: "linear-gradient(135deg,rgba(0,0,0,0.4),rgba(0,0,0,0.1))"
-          }} />
-        </div>
+            height: "100vh",
+            objectFit: "cover"
+          }}
+        />
+        {/* Overlay */}
+        <div style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          background: "linear-gradient(135deg,rgba(0,0,0,0.4),rgba(0,0,0,0.1))"
+        }} />
+      </div>
 
-        {/* RIGHT FORM */}
-        <div className="col-md-6 d-flex justify-content-center align-items-center">
-          <div
-            className="p-4 shadow-lg border-0"
-            style={{
-              maxWidth: "420px",
-              width: "100%",
-              borderRadius: "20px",
-              background: "rgba(255,255,255,0.7)",
-              backdropFilter: "blur(12px)",
-              boxShadow: "0 10px 30px rgba(0,0,0,0.1)"
-            }}
-          >
+      {/* RIGHT FORM */}
+      <div className="col-md-6 d-flex justify-content-center align-items-center">
+        <div
+          className="p-4 shadow-lg border-0"
+          style={{
+            maxWidth: "420px",
+            width: "100%",
+            borderRadius: "20px",
+            background: "rgba(255,255,255,0.7)",
+            backdropFilter: "blur(12px)",
+            boxShadow: "0 10px 30px rgba(0,0,0,0.1)"
+          }}
+        >
 
-            {/* HEADER */}
-            <div className="text-center mb-4">
-              <div
-                style={{
-                  width: 55,
-                  height: 55,
-                  borderRadius: "50%",
-                  background: "#2563eb",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  margin: "auto"
-                }}
-              >
-                <Lock size={26} color="white" />
-              </div>
-
-              <h3 className="fw-bold mt-3">
-                {forgotMode
-                  ? "Reset Password"
-                  : isRegister
-                    ? "Create Account"
-                    : "Welcome Back"}
-              </h3>
-
-              <small className="text-muted" style={{
-                letterSpacing: 1
-              }}>
-                Manage your finances smartly 🚀
-              </small>
+          {/* HEADER */}
+          <div className="text-center mb-4">
+            <div
+              style={{
+                width: 55,
+                height: 55,
+                borderRadius: "50%",
+                background: "#2563eb",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                margin: "auto"
+              }}
+            >
+              <Lock size={26} color="white" />
             </div>
 
-            {/* REGISTER EXTRA */}
-            {isRegister && step === 1 && !forgotMode && (
-              <>
-                <input
-                  name="name"
-                  placeholder="Full Name"
-                  className="form-control mb-3"
-                  onChange={handleChange}
-                />
-                <input
-                  name="mobile"
-                  placeholder="Mobile"
-                  className="form-control mb-3"
-                  onChange={handleChange}
-                />
-              </>
-            )}
+            <h3 className="fw-bold mt-3">
+              {forgotMode
+                ? "Reset Password"
+                : isRegister
+                  ? "Create Account"
+                  : "Welcome Back"}
+            </h3>
 
-            {/* EMAIL */}
-            <div className="input-group mb-3">
-              <span className="input-group-text bg-white">
-                <Mail size={16} />
-              </span>
+            <small className="text-muted" style={{
+              letterSpacing: 1
+            }}>
+              Manage your finances smartly 🚀
+            </small>
+          </div>
+
+          {/* REGISTER EXTRA */}
+          {isRegister && step === 1 && !forgotMode && (
+            <>
               <input
-                type="email"
-                name="email"
-                className="form-control"
-                placeholder="Email address"
+                name="name"
+                placeholder="Full Name"
+                className="form-control mb-3"
                 onChange={handleChange}
               />
-            </div>
+              <input
+                name="mobile"
+                placeholder="Mobile"
+                className="form-control mb-3"
+                onChange={handleChange}
+              />
+            </>
+          )}
 
-            {/* PASSWORD */}
-            {step === 1 && !forgotMode && (
-              <>
-                <div className="input-group mb-2">
-                  <span className="input-group-text bg-white">
-                    <Lock size={16} />
-                  </span>
+          {/* EMAIL */}
+          <div className="input-group mb-3">
+            <span className="input-group-text bg-white">
+              <Mail size={16} />
+            </span>
+            <input
+              type="email"
+              name="email"
+              className="form-control"
+              placeholder="Email address"
+              onChange={handleChange}
+            />
+          </div>
 
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    name="password"
-                    className="form-control"
-                    placeholder="Password"
-                    onChange={handleChange}
-                  />
+          {/* PASSWORD */}
+          {step === 1 && !forgotMode && (
+            <>
+              <div className="input-group mb-2">
+                <span className="input-group-text bg-white">
+                  <Lock size={16} />
+                </span>
 
-                  <span
-                    className="input-group-text bg-white"
-                    style={{ cursor: "pointer" }}
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </span>
-                </div>
-
-                {/* Strength */}
-                {/* Strength */}
-                {isRegister && form.password && (
-                  <>
-                    <div style={{ height: "6px", background: "#eee", borderRadius: "10px" }}>
-                      <div
-                        style={{
-                          width: strength.width,
-                          height: "6px",
-                          background: strength.color,
-                          borderRadius: "10px",
-                          transition: "0.3s"
-                        }}
-                      />
-                    </div>
-                    <small style={{ color: strength.color }}>
-                      {strength.label} password
-                    </small>
-                  </>
-                )}
-
-                {!isRegister && (
-                  <p
-                    className="text-end small mt-2"
-                    style={{ cursor: "pointer", color: "#2563eb" , letterSpacing: 1}}
-                    onClick={() => {
-                      setForgotMode(true);
-                      setStep(1);
-                    }}
-                  >
-                    Forgot Password
-                  </p>
-                )}
-              </>
-            )}
-
-            {/* OTP */}
-            {step === 2 && (
-              <>
                 <input
-                  name="otp"
-                  placeholder="Enter OTP"
-                  className="form-control mb-3"
-                  onChange={handleChange}
-                />
-
-                {timer > 0 ? (
-                  <small className="text-muted">Resend in {timer}s</small>
-                ) : (
-                  <p
-                    style={{ cursor: "pointer", color: "#2563eb" }}
-                    onClick={forgotMode ? sendResetOTP : sendOTP}
-                  >
-                    Resend OTP
-                  </p>
-                )}
-              </>
-            )}
-
-            {/* RESET PASSWORD */}
-            {forgotMode && step === 3 && (
-              <>
-                <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   name="password"
-                  placeholder="New Password"
-                  className="form-control mb-3"
+                  className="form-control"
+                  placeholder="Password"
                   onChange={handleChange}
                 />
-                <input
-                  type="password"
-                  name="confirmPassword"
-                  placeholder="Confirm Password"
-                  className="form-control mb-3"
-                  onChange={handleChange}
-                />
-              </>
-            )}
 
-            {/* BUTTON */}
-            <button
-              className="btn w-100 mt-3"
-              disabled={
-                isLoading ||
-                (isRegister && step === 1 && strength.label !== "Strong")
-              }
-              style={{
-                background:
-                  isRegister && step === 1 && strength.label !== "Strong"
-                    ? "#2563eb"
-                    : "#2563eb",
-                color:
-                  isRegister && step === 1 && form.password && strength.label !== "Strong"
-                    ? "white"
-                    : "white",
-                borderRadius: "10px",
-                padding: "10px",
-                fontWeight: "600",
-                transition: "0.3s",
-                cursor:
-                  isRegister && step === 1 && strength.label !== "Strong"
-                    ? "not-allowed"
-                    : "pointer"
-              }}
-              onClick={
-                forgotMode
-                  ? step === 1
-                    ? sendResetOTP
-                    : step === 2
-                      ? verifyResetOTP
-                      : resetPassword
-                  : isRegister
-                    ? step === 1
-                      ? sendOTP
-                      : verifyOTP
-                    : loginUser
-              }
-            >
-              {isLoading ? (
-                <Loader2 size={16} className="spin" />
-              ) : forgotMode ? (
-                step === 1 ? "Send OTP" :
-                  step === 2 ? "Verify OTP" : "Reset Password"
-              ) : isRegister ? (
-                step === 1
-                  ? (form.password && strength.label !== "Strong"
-                    ? "Weak Password"
-                    : "Send OTP")
-                  : "Verify & Register"
-              ) : (
-                "Sign In"
-              )}
-            </button>
-
-            {/* TOGGLE */}
-            {!forgotMode && (
-              <p className="text-center mt-4">
-                {isRegister ? "Already have account?" : "Don't have account?"}
                 <span
-                  style={{ cursor: "pointer", color: "#2563eb", marginLeft: "6px", fontWeight: "600" }}
+                  className="input-group-text bg-white"
+                  style={{ cursor: "pointer" }}
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </span>
+              </div>
+
+              {/* Strength */}
+              {/* Strength */}
+              {isRegister && form.password && (
+                <>
+                  <div style={{ height: "6px", background: "#eee", borderRadius: "10px" }}>
+                    <div
+                      style={{
+                        width: strength.width,
+                        height: "6px",
+                        background: strength.color,
+                        borderRadius: "10px",
+                        transition: "0.3s"
+                      }}
+                    />
+                  </div>
+                  <small style={{ color: strength.color }}>
+                    {strength.label} password
+                  </small>
+                </>
+              )}
+
+              {!isRegister && (
+                <p
+                  className="text-end small mt-2"
+                  style={{ cursor: "pointer", color: "#2563eb", letterSpacing: 1 }}
                   onClick={() => {
-                    setIsRegister(!isRegister);
+                    setForgotMode(true);
                     setStep(1);
                   }}
                 >
-                  {isRegister ? "Login" : "Register"}
-                </span>
-              </p>
-            )}
+                  Forgot Password
+                </p>
+              )}
+            </>
+          )}
 
-            {forgotMode && (
-              <p
-                className="text-center mt-3"
-                style={{ cursor: "pointer", color: "#2563eb" }}
+          {/* OTP */}
+          {step === 2 && (
+            <>
+              <input
+                name="otp"
+                placeholder="Enter OTP"
+                className="form-control mb-3"
+                onChange={handleChange}
+              />
+
+              {timer > 0 ? (
+                <small className="text-muted">Resend in {timer}s</small>
+              ) : (
+                <p
+                  style={{ cursor: "pointer", color: "#2563eb" }}
+                  onClick={forgotMode ? sendResetOTP : sendOTP}
+                >
+                  Resend OTP
+                </p>
+              )}
+            </>
+          )}
+
+          {/* RESET PASSWORD */}
+          {forgotMode && step === 3 && (
+            <>
+              <input
+                type="password"
+                name="password"
+                placeholder="New Password"
+                className="form-control mb-3"
+                onChange={handleChange}
+              />
+              <input
+                type="password"
+                name="confirmPassword"
+                placeholder="Confirm Password"
+                className="form-control mb-3"
+                onChange={handleChange}
+              />
+            </>
+          )}
+
+          {/* BUTTON */}
+          <button
+            className="btn w-100 mt-3"
+            disabled={
+              isLoading ||
+              (isRegister && step === 1 && strength.label !== "Strong")
+            }
+            style={{
+              background:
+                isRegister && step === 1 && strength.label !== "Strong"
+                  ? "#2563eb"
+                  : "#2563eb",
+              color:
+                isRegister && step === 1 && form.password && strength.label !== "Strong"
+                  ? "white"
+                  : "white",
+              borderRadius: "10px",
+              padding: "10px",
+              fontWeight: "600",
+              transition: "0.3s",
+              cursor:
+                isRegister && step === 1 && strength.label !== "Strong"
+                  ? "not-allowed"
+                  : "pointer"
+            }}
+            onClick={
+              forgotMode
+                ? step === 1
+                  ? sendResetOTP
+                  : step === 2
+                    ? verifyResetOTP
+                    : resetPassword
+                : isRegister
+                  ? step === 1
+                    ? sendOTP
+                    : verifyOTP
+                  : loginUser
+            }
+          >
+            {isLoading ? (
+              <Loader2 size={16} className="spin" />
+            ) : forgotMode ? (
+              step === 1 ? "Send OTP" :
+                step === 2 ? "Verify OTP" : "Reset Password"
+            ) : isRegister ? (
+              step === 1
+                ? (form.password && strength.label !== "Strong"
+                  ? "Weak Password"
+                  : "Send OTP")
+                : "Verify & Register"
+            ) : (
+              "Sign In"
+            )}
+          </button>
+
+          {/* TOGGLE */}
+          {!forgotMode && (
+            <p className="text-center mt-4">
+              {isRegister ? "Already have account?" : "Don't have account?"}
+              <span
+                style={{ cursor: "pointer", color: "#2563eb", marginLeft: "6px", fontWeight: "600" }}
                 onClick={() => {
-                  setForgotMode(false);
+                  setIsRegister(!isRegister);
                   setStep(1);
                 }}
               >
-                Back to Login
-              </p>
-            )}
-          </div>
+                {isRegister ? "Login" : "Register"}
+              </span>
+            </p>
+          )}
+
+          {forgotMode && (
+            <p
+              className="text-center mt-3"
+              style={{ cursor: "pointer", color: "#2563eb" }}
+              onClick={() => {
+                setForgotMode(false);
+                setStep(1);
+              }}
+            >
+              Back to Login
+            </p>
+          )}
         </div>
       </div>
     </div>
-  );
+  </div>
+);
 
 }
 
