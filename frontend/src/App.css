@@ -41,3 +41,12 @@ body.dark .text-muted {
   color: #94a3b8 !important;
 }
 
+.auth-page {
+  background: linear-gradient(135deg,#eef2f7,#dbeafe) !important;
+}
+
+.auth-page input,
+.auth-page .form-control {
+  background-color: #fff !important;
+  color: #000 !important;
+}
