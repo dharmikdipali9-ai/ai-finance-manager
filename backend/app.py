@@ -602,25 +602,31 @@ def update_account(id):
         return {"message": "Amount must be greater than 0"}, 400
 
 
+    new_name = name.strip() if name and name.strip() else account.name
+    old_name = account.name.strip()
+
+    name_changed = new_name.lower() != old_name.lower()
+
+    message = "Account updated successfully"
+
+    # ✅ Handle name change
+    if name_changed:
+        if kyc:
+            upload_result = cloudinary.uploader.upload(kyc, resource_type="auto")
+
+            account.name = new_name
+            account.kyc_url = upload_result.get("secure_url")
+            account.kyc_status = "Pending"
+        else:
+            message = "Deposit successful, but KYC required to change name"
+
     # ✅ Always deposit
     account.balance += amount
-
-    # ✅ If name changed
-    if name != account.name:
-        if not kyc:
-            return {"message": "KYC required for name change"}, 400
-
-        # 🔥 Upload to Cloudinary
-        upload_result = cloudinary.uploader.upload(kyc, resource_type="auto")
-
-        account.name = name
-        account.kyc_url = upload_result.get("secure_url")
-        account.kyc_status = "Pending"   # 👈 IMPORTANT
 
     db.session.commit()
 
     return {
-        "message": "Account updated successfully",
+        "message": message,
         "kyc_status": account.kyc_status
     }
 

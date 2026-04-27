@@ -60,20 +60,25 @@ function Accounts() {
     try {
       const formData = new FormData();
 
-      formData.append("amount", editForm.amount);
-      formData.append("name", editForm.name);
+      const nameChanged =
+        editForm.name.trim().toLowerCase() !==
+        editData.type.trim().toLowerCase();
 
-      if (editForm.name !== editData.type) {
-        if (!kycFile) {
-          toast.warning("Please upload KYC document ⚠️");
-          return;
-        }
+      formData.append("amount", editForm.amount);
+      formData.append("name", editForm.name.trim());
+
+      if (nameChanged && kycFile) {
         formData.append("kyc", kycFile);
       }
 
-      await API.put(`/account/${editData.id}`, formData);
+      const res = await API.put(`/account/${editData.id}`, formData);
 
-      toast.success("Account updated successfully ✅");
+      if (res.data.message.includes("KYC")) {
+        toast.warning(res.data.message);
+      } else {
+        toast.success(res.data.message);
+      }
+
       setEditModal(false);
       getAccounts();
 
@@ -81,6 +86,8 @@ function Accounts() {
       toast.error(err.response?.data?.message || "Update failed ❌");
     }
   };
+
+
 
   const getBank = (name) => banks.find((b) => b.name === name);
 
@@ -387,8 +394,7 @@ function Accounts() {
                   onClick={updateAccount}
                   disabled={
                     !editForm.amount ||
-                    Number(editForm.amount) <= 0 ||
-                    (isNameChanged && !kycFile)
+                    Number(editForm.amount) <= 0
                   }
                 >
                   Save
