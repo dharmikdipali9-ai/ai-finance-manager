@@ -590,7 +590,7 @@ def update_account(id):
     if not account:
         return {"message": "Account not found"}, 404
 
-    name = request.form.get("name")
+    holder = request.form.get("type")   # 👈 account holder name
     kyc = request.files.get("kyc")
 
     # ✅ ADD IT HERE
@@ -600,25 +600,25 @@ def update_account(id):
         return {"message": "Invalid amount"}, 400
     if amount <= 0:
         return {"message": "Amount must be greater than 0"}, 400
+    
+    # ✅ Safe holder name
+    new_holder = holder.strip() if holder and holder.strip() else account.type
+    old_holder = account.type.strip()
 
-
-    new_name = name.strip() if name and name.strip() else account.name
-    old_name = account.name.strip()
-
-    name_changed = new_name.lower() != old_name.lower()
+    name_changed = new_holder.lower() != old_holder.lower()
 
     message = "Account updated successfully"
 
-    # ✅ Handle name change
+    # ✅ Handle ONLY account holder name change
     if name_changed:
         if kyc:
             upload_result = cloudinary.uploader.upload(kyc, resource_type="auto")
 
-            account.name = new_name
+            account.type = new_holder
             account.kyc_url = upload_result.get("secure_url")
             account.kyc_status = "Pending"
         else:
-            message = "Deposit successful, but KYC required to change name"
+            message = "Deposit successful, but KYC required to change account holder name"
 
     # ✅ Always deposit
     account.balance += amount

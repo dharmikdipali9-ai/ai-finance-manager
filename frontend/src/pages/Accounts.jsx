@@ -65,7 +65,7 @@ function Accounts() {
         editData.type.trim().toLowerCase();
 
       formData.append("amount", editForm.amount);
-      formData.append("name", editForm.name.trim());
+      formData.append("type", editForm.name.trim());
 
       if (nameChanged && kycFile) {
         formData.append("kyc", kycFile);
