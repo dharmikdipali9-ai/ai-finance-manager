@@ -88,6 +88,9 @@ function Sidebar() {
         flexDirection: "column",
         borderRight: "1px solid #0f172a",
         zIndex: 1000,
+        /* 🔥 ADD THIS */
+        overflowY: "auto",
+        overflowX: "hidden",
       }}
     >
       {/* 🔹 LOGO */}
