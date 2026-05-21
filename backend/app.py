@@ -186,36 +186,52 @@ from werkzeug.security import generate_password_hash
 
 @app.route("/register", methods=["POST"])
 def register():
-    data = request.json
-    email = data["email"]
+    try:
+        data = request.json
+        email = data["email"]
 
-    otp = str(random.randint(100000, 999999))
+        # check existing user
+        existing_user = User.query.filter_by(email=email).first()
 
-    otp_store[email] = otp
-    temp_user_data[email] = {
-        "name": data["name"],
-        "mobile": data["mobile"],
-        "password": generate_password_hash(data["password"])
-    }
+        if existing_user:
+            return {"message": "Email already registered"}, 400
 
-    send_email(
-        to=email,
-        subject="OTP Verification",
-        body=f"Your OTP is {otp}"
-    )
-    
+        otp = str(random.randint(100000, 999999))
 
-    return {"message": "OTP sent to email"}
+        otp_store[email] = otp
+
+        temp_user_data[email] = {
+            "name": data["name"],
+            "mobile": data["mobile"],
+            "password": generate_password_hash(data["password"])
+        }
+
+        send_email(
+            to=email,
+            subject="OTP Verification",
+            body=f"Your OTP is {otp}"
+        )
+
+        return {"message": "OTP sent to email"}
+
+    except Exception as e:
+        print("REGISTER ERROR:", str(e))
+        return {"error": str(e)}, 500
 
 @app.route("/verify-otp", methods=["POST"])
 def verify_otp():
-    data = request.json
-    email = data["email"]
-    otp = data["otp"]
+    try:
+        data = request.json
+        email = data["email"]
+        otp = data["otp"]
 
-    if otp_store.get(email) == otp:
+        if otp_store.get(email) != otp:
+            return {"message": "Invalid OTP"}, 401
 
         user_data = temp_user_data.get(email)
+
+        if not user_data:
+            return {"message": "Session expired"}, 400
 
         user = User(
             name=user_data["name"],
@@ -227,13 +243,17 @@ def verify_otp():
         db.session.add(user)
         db.session.commit()
 
-        # cleanup
         otp_store.pop(email, None)
         temp_user_data.pop(email, None)
 
         return {"message": "User registered successfully"}
 
-    return {"message": "Invalid OTP"}, 401
+    except Exception as e:
+        print("VERIFY OTP ERROR:", str(e))
+        return {"error": str(e)}, 500
+
+
+
 
 @app.route("/login", methods=["POST"])
 def login():
