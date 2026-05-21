@@ -55,11 +55,12 @@ cloudinary.config(
 
 jwt = JWTManager(app)
 
-uri = os.getenv("DATABASE_URL") or os.getenv("MYSQL_URL")
+uri = os.getenv("DATABASE_URL") or os.getenv("POSTGRES_URL")
 
-if uri and uri.startswith("mysql://"):
-    uri = uri.replace("mysql://", "mysql+pymysql://", 1)
-
+# Fix for older postgres:// format
+if uri and uri.startswith("postgres://"):
+    uri = uri.replace("postgres://", "postgresql://", 1)
+    
 app.config["SQLALCHEMY_DATABASE_URI"] = uri
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
