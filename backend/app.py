@@ -77,19 +77,19 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
 class User(db.Model):
+    __tablename__ = "users"
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     mobile = db.Column(db.String(15))
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
     profile_image = db.Column(db.String(255))
-    
-    # 🔔 Notification Settings
+
     email_alerts = db.Column(db.Boolean, default=True)
     budget_exceeded_alert = db.Column(db.Boolean, default=True)
     near_limit_alert = db.Column(db.Boolean, default=True)
 
-    # 🎨 Appearance
     theme = db.Column(db.String(10), default="light")
 
 class Transaction(db.Model):
@@ -144,8 +144,8 @@ class Notification(db.Model):
     is_read = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-with app.app_context():
-    db.create_all()
+# with app.app_context():
+#     db.create_all()
  
  
 def send_email(to, subject, body):
