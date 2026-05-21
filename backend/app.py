@@ -69,7 +69,9 @@ app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = os.getenv("MAIL_USERNAME")
 app.config['MAIL_PASSWORD'] = os.getenv("MAIL_PASSWORD")
+app.config['MAIL_DEFAULT_SENDER'] = os.getenv("MAIL_USERNAME")
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=7)
+app.config['MAIL_TIMEOUT'] = 10
 
 mail = Mail(app)
 
@@ -150,8 +152,10 @@ class Notification(db.Model):
  
 def send_email(to, subject, body):
     try:
+        print("📧 Sending email...")
+
         msg = Message(
-            subject=subject,
+            subject,
             sender=app.config['MAIL_USERNAME'],
             recipients=[to]
         )
@@ -160,14 +164,10 @@ def send_email(to, subject, body):
 
         mail.send(msg)
 
-        print("✅ MAIL SENT")
+        print("✅ Email sent successfully")
 
     except Exception as e:
-        import traceback
-
-        print("🔥 MAIL ERROR")
-        traceback.print_exc()
-
+        print("🔥 EMAIL ERROR:", str(e))
         raise e  
     
 # @app.route("/test-email")
