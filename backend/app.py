@@ -149,14 +149,29 @@ with app.app_context():
  
  
 def send_email(to, subject, body):
-    msg = Message(subject,
-                  sender=app.config['MAIL_USERNAME'],
-                  recipients=[to])
-    msg.body = body
-    mail.send(msg)    
+    try:
+        msg = Message(
+            subject=subject,
+            sender=app.config['MAIL_USERNAME'],
+            recipients=[to]
+        )
+
+        msg.body = body
+
+        mail.send(msg)
+
+        print("✅ MAIL SENT")
+
+    except Exception as e:
+        import traceback
+
+        print("🔥 MAIL ERROR")
+        traceback.print_exc()
+
+        raise e  
     
-#@app.route("/test-email")
-#def test_email():
+# @app.route("/test-email")
+# def test_email():
 #    send_email(
 #        to="dharmikdipali9@gmail.com",
 #        subject="Test Email",
@@ -187,10 +202,21 @@ from werkzeug.security import generate_password_hash
 @app.route("/register", methods=["POST"])
 def register():
     try:
-        data = request.json
-        email = data["email"]
+        data = request.get_json()
 
-        # check existing user
+        print("📩 Incoming Data:", data)
+
+        if not data:
+            return {"error": "No JSON data received"}, 400
+
+        email = data.get("email")
+        name = data.get("name")
+        mobile = data.get("mobile")
+        password = data.get("password")
+
+        if not email or not name or not password:
+            return {"error": "Missing required fields"}, 400
+
         existing_user = User.query.filter_by(email=email).first()
 
         if existing_user:
@@ -201,10 +227,12 @@ def register():
         otp_store[email] = otp
 
         temp_user_data[email] = {
-            "name": data["name"],
-            "mobile": data["mobile"],
-            "password": generate_password_hash(data["password"])
+            "name": name,
+            "mobile": mobile,
+            "password": generate_password_hash(password)
         }
+
+        print("📧 Sending email...")
 
         send_email(
             to=email,
@@ -212,11 +240,20 @@ def register():
             body=f"Your OTP is {otp}"
         )
 
+        print("✅ Email sent successfully")
+
         return {"message": "OTP sent to email"}
 
     except Exception as e:
-        print("REGISTER ERROR:", str(e))
-        return {"error": str(e)}, 500
+        import traceback
+
+        print("🔥 REGISTER ERROR:")
+        traceback.print_exc()
+
+        return {
+            "error": str(e)
+        }, 500
+
 
 @app.route("/verify-otp", methods=["POST"])
 def verify_otp():
