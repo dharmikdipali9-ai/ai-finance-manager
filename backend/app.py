@@ -164,12 +164,18 @@ def send_email(to, subject, body):
 #    )
 #    return "Email sent!" 
 
-@app.after_request
-def after_request(response):
-    response.headers.add("Access-Control-Allow-Origin", "https://ai-finance-manager-nu.vercel.app")
-    response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
-    response.headers.add("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
-    return response   
+CORS(
+    app,
+    resources={
+        r"/*": {
+            "origins": [
+                "http://localhost:3000",
+                "https://ai-finance-manager-nu.vercel.app"
+            ]
+        }
+    },
+    supports_credentials=True
+)  
     
 @app.route('/')
 def home():
@@ -233,7 +239,14 @@ def verify_otp():
 def login():
     data = request.json
 
+    print("LOGIN DATA:", data)
+
     user = User.query.filter_by(email=data["email"]).first()
+
+    print("USER FOUND:", user)
+
+    if user:
+        print("HASH CHECK:", check_password_hash(user.password, data["password"]))
 
     if user and check_password_hash(user.password, data["password"]):
         token = create_access_token(identity=str(user.id))
@@ -245,7 +258,6 @@ def login():
         }
 
     return {"message": "Invalid credentials"}, 401
-
 
 @app.route("/transaction", methods=["POST"])
 @jwt_required()
