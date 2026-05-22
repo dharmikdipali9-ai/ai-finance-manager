@@ -18,6 +18,8 @@ from flask_socketio import join_room
 from sqlalchemy import func
 import cloudinary
 import cloudinary.uploader
+import smtplib
+from email.mime.text import MIMEText
 
 load_dotenv()
 
@@ -149,27 +151,57 @@ class Notification(db.Model):
 # with app.app_context():
 #     db.create_all()
  
- 
-def send_email(to, subject, body):
-    try:
-        print("📧 Sending email...")
+def send_email(to_email, subject, body):
 
-        msg = Message(
-            subject,
-            sender=app.config['MAIL_USERNAME'],
-            recipients=[to]
+    try:
+
+        sender_email = os.getenv("MAIL_USERNAME")
+        sender_password = os.getenv("MAIL_PASSWORD")
+
+        msg = MIMEText(body)
+
+        msg["Subject"] = subject
+        msg["From"] = sender_email
+        msg["To"] = to_email
+
+        print("📧 Connecting to SMTP...")
+
+        server = smtplib.SMTP(
+            "smtp.gmail.com",
+            587,
+            timeout=10
         )
 
-        msg.body = body
+        server.starttls()
 
-        mail.send(msg)
+        print("📧 Logging in...")
+
+        server.login(
+            sender_email,
+            sender_password
+        )
+
+        print("📧 Sending email...")
+
+        server.sendmail(
+            sender_email,
+            to_email,
+            msg.as_string()
+        )
 
         print("✅ Email sent successfully")
 
+        server.quit()
+
+        return True
+
     except Exception as e:
-        print("🔥 EMAIL ERROR:", str(e))
-        raise e  
-    
+
+        print("❌ Email Error:", str(e))
+
+        return False 
+
+
 # @app.route("/test-email")
 # def test_email():
 #    send_email(
@@ -201,13 +233,17 @@ from werkzeug.security import generate_password_hash
 
 @app.route("/register", methods=["POST"])
 def register():
+
     try:
+
         data = request.get_json()
 
         print("📩 Incoming Data:", data)
 
         if not data:
-            return {"error": "No JSON data received"}, 400
+            return {
+                "error": "No JSON data received"
+            }, 400
 
         email = data.get("email")
         name = data.get("name")
@@ -215,12 +251,18 @@ def register():
         password = data.get("password")
 
         if not email or not name or not password:
-            return {"error": "Missing required fields"}, 400
+            return {
+                "error": "Missing required fields"
+            }, 400
 
-        existing_user = User.query.filter_by(email=email).first()
+        existing_user = User.query.filter_by(
+            email=email
+        ).first()
 
         if existing_user:
-            return {"message": "Email already registered"}, 400
+            return {
+                "message": "Email already registered"
+            }, 400
 
         otp = str(random.randint(100000, 999999))
 
@@ -234,17 +276,28 @@ def register():
 
         print("📧 Sending email...")
 
-        send_email(
-            to=email,
+        email_sent = send_email(
+            to_email=email,
             subject="OTP Verification",
             body=f"Your OTP is {otp}"
         )
 
+        if not email_sent:
+
+            print("❌ Email failed")
+
+            return {
+                "error": "Failed to send OTP email"
+            }, 500
+
         print("✅ Email sent successfully")
 
-        return {"message": "OTP sent to email"}
+        return {
+            "message": "OTP sent to email"
+        }, 200
 
     except Exception as e:
+
         import traceback
 
         print("🔥 REGISTER ERROR:")
@@ -253,7 +306,6 @@ def register():
         return {
             "error": str(e)
         }, 500
-
 
 @app.route("/verify-otp", methods=["POST"])
 def verify_otp():
