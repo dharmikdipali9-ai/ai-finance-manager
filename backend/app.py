@@ -20,6 +20,8 @@ import cloudinary
 import cloudinary.uploader
 import smtplib
 from email.mime.text import MIMEText
+from sqlalchemy import create_engine
+
 
 load_dotenv()
 
@@ -64,6 +66,20 @@ if uri and uri.startswith("postgres://"):
     uri = uri.replace("postgres://", "postgresql://", 1)
     
 app.config["SQLALCHEMY_DATABASE_URI"] = uri
+
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+    "pool_pre_ping": True,
+    "pool_recycle": 300,
+}
+
+engine = create_engine(
+    uri,
+    pool_pre_ping=True,
+    pool_recycle=300,
+    connect_args={
+        "sslmode": "require"
+    }
+)
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
